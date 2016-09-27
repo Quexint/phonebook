@@ -6,6 +6,13 @@
 #include "phonebook_orig.h"
 
 /* original version */
+entry *init_struct()
+{
+    entry *pHead = (entry *) malloc(sizeof(entry));
+    pHead->pNext = NULL;
+    return pHead;
+}
+
 entry *findName(char lastName[], entry *pHead)
 {
     while (pHead != NULL) {
@@ -25,4 +32,10 @@ entry *append(char lastName[], entry *e)
     e->pNext = NULL;
 
     return e;
+}
+
+void free_struct(entry *pHead)
+{
+    if (pHead->pNext) free(pHead->pNext);
+    free(pHead);
 }

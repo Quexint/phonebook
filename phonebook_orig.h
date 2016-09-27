@@ -18,6 +18,8 @@ typedef struct __PHONE_BOOK_ENTRY {
     struct __PHONE_BOOK_ENTRY *pNext;
 } entry;
 
+void free_struct(entry *pHead);
+entry *init_struct();
 entry *findName(char lastName[], entry *pHead);
 entry *append(char lastName[], entry *e);
 
