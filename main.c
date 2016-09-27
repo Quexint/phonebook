@@ -8,6 +8,15 @@
 
 #define DICT_FILE "./dictionary/words.txt"
 
+#define MAX_NUMBER 500000
+
+char last_name_record[MAX_NUMBER][MAX_LAST_NAME_SIZE];
+
+int max(int a, int b)
+{
+    return a > b ? a : b;
+}
+
 static double diff_in_second(struct timespec t1, struct timespec t2)
 {
     struct timespec diff;
@@ -24,8 +33,7 @@ static double diff_in_second(struct timespec t1, struct timespec t2)
 int main(int argc, char *argv[])
 {
     FILE *fp;
-    int i = 0;
-    char line[MAX_LAST_NAME_SIZE];
+    int i, n;
     struct timespec start, end;
     double cpu_time1, cpu_time2;
 
@@ -36,36 +44,43 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    /* Save input to last_name_record */
+    for(n = 0; fgets(last_name_record[n], sizeof(char) * MAX_LAST_NAME_SIZE, fp); n++) {
+        i = 0;
+        while(last_name_record[n][i] != '\0')
+            i++;
+        last_name_record[n][i - 1] = '\0';
+    }
+    /* close file as soon as possible */
+    fclose(fp);
+
     /* build the entry */
     entry *pHead, *e;
     e = pHead = init_struct();
     printf("size of entry : %lu bytes\n", sizeof(entry));
 
 
+    /* Only test `append()` without I/O time. */
 #if defined(__GNUC__)
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
     clock_gettime(CLOCK_REALTIME, &start);
-    while (fgets(line, sizeof(line), fp)) {
-        while (line[i] != '\0')
-            i++;
-        line[i - 1] = '\0';
-        i = 0;
-        e = append(line, e);
-    }
+    for(i = 0; i < n; i++)
+        e = append(last_name_record[i], e);
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
 
-    /* close file as soon as possible */
-    fclose(fp);
+    e = pHead;
+
+    /* Make a testing with 1% of lastNames */
+    int test_num = max(n / 100, 1);
+    int *test_array = (int *) malloc(sizeof(int) * test_num);
+    for(i = 0; i < test_num; i++)
+        test_array[i] = rand() % n;
 
     e = pHead;
 
-    /* the givn last name to find */
-    char input[MAX_LAST_NAME_SIZE] = "zyxel";
-    e = pHead;
-
-    assert(findName(input, e) &&
+    assert(findName(last_name_record[0], e) &&
            "Did you implement findName() in " IMPL "?");
     /* assert(0 == strcmp(findName(input, e)->lastName, "zyxel")); */
 
@@ -74,9 +89,11 @@ int main(int argc, char *argv[])
 #endif
     /* compute the execution time */
     clock_gettime(CLOCK_REALTIME, &start);
-    findName(input, e);
+    for(i = 0; i < test_num; i++)
+        assert(NULL != findName(last_name_record[test_array[i]], e));
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time2 = diff_in_second(start, end);
+    assert(e != NULL);
 
     FILE *output;
 #if defined(OPT)
